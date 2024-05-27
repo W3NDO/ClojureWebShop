@@ -1,10 +1,10 @@
 (ns input-random)
 
 ; Products are simply numbers from 0 to 999.
-(def products (range 1000))
+(def products (range 50))
 
 ; Stores are letters from A to Z.
-(def stores ["A" "B" "C" "D" "E" "F" "G" "H" "I" "J" "K" "L" "M" "N" "O" "P" "Q" "R" "S" "T" "U" "V" "W" "X" "Y" "Z"])
+(def stores ["Aldi" "Carrefour" "Colruyt" "Delhaize" "Lidl" "Nakumatt" "Tuskys" "Uchumi" "Ecomatt" "TasyaMatt" "JujaMall" "Kilimall" "Jumia" "MombasaMatt" "Target" "BlockBuster" "NasDaq" "IBM" "NVIDIA" "Tesla" "PwC" "Pillar" "Opinio" "KisumuMatt" "CrossRoads" "Amazon" "Shien"])
 
 ; Prices are randomly generated numbers between 1 and 100.
 (def prices
@@ -20,11 +20,11 @@
     (for [_p products]
       (vec
         (for [_s stores]
-          (+ 1 (rand-int 1000)))))))
+          (+ 1 (rand-int 20)))))))
 
 ; Customers are randomly generated too.
 (def customers
-  (for [id (range 1000)]
+  (for [id (range 20)]
     (let [n-products
             (+ 1 (rand-int 100))
             ; Number of products in shopping list is random number between 1 and

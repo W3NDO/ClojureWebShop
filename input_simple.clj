@@ -30,6 +30,13 @@
    [  25   17   31   18   20] ; Pear
   ])
 
+;; (def stock 
+;;   [[5   5   3   2   5] ; Apple
+;;    [5   7   6   1   2] ; Avocado
+;;    [2   3   2   1   8] ; Banana
+;;    [5   7   3   1   0] ; Pear
+;;    ])
+
 ; Customers and the products they want to buy.
 ;
 ; E.g. customer 0 wants to buy 5 bananas and 7 apples.
@@ -38,13 +45,12 @@
    {:id 1 :products [["Banana" 7] ["Apple" 9]]}
    {:id 2 :products [["Pear" 15]]}
    {:id 3 :products [["Apple" 15] ["Avocado" 4] ["Banana" 7] ["Pear" 2]]}
-   {:id 4 :products [["Apple" 5] ["Apple" 2]]}
+   {:id 4 :products [["Apple" 5] ["Avocado" 2]]}
    {:id 5 :products [["Banana" 4]]}
    {:id 6 :products [["Avocado" 2] ["Apple" 1]]}
    {:id 7 :products [["Banana" 3] ["Apple" 5] ["Pear" 7]]}
    {:id 8 :products [["Pear" 1] ["Banana" 4]]}
    {:id 9 :products [["Apple" 6] ["Pear" 4] ["Avocado" 3]]}
-   {:id 10 :products [["Apple" 3] ["Avocado" 12] ["Pear" 4] ["Avocado" 3]]}
   ])
 
 ; Time in milliseconds between sales periods
