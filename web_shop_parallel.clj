@@ -45,7 +45,7 @@
 
 ; We wrap the prices from the input file in a single atom in this
 ; implementation. You are free to change this to a more appropriate mechanism.
-(def prices (atom input/prices))
+(def prices (ref input/prices))
 
 (defn- get-price [store-id product-id]
   "Returns the price of the given product in the given store."
@@ -62,12 +62,12 @@
 
 (defn- set-price [store-id product-id new-price]
   "Set the price of the given product in the given store to `new-price`."
-  (swap! prices assoc-in [product-id store-id] new-price))
+  (dosync(alter prices assoc-in [product-id store-id] new-price))) ; we wrap the price changes in a transaciton.
 
 
 ; We wrap the stock from the input file in a single atom in this
 ; implementation. You are free to change this to a more appropriate mechanism.
-(def stock (atom input/stock))
+(def stock (ref input/stock))
 
 (defn print-stock [stock]
   "Print stock. Note: `stock` should not be an atom/ref/... but the value it
@@ -91,11 +91,14 @@
   (>= (nth (nth @stock product-id) store-id) n))
 
 (defn- buy-product [store-id product-id n]
-  "Updates `stock` to buy `n` of the given product in the given store."
-  (swap! stock
-         (fn [old-stock]
-           (update-in old-stock [product-id store-id]
-                      (fn [available] (- available n))))))
+  "Updates `stock` to buy `n` of the given product in the given store but with stock as a ref."
+  (dosync
+   (ensure stock)
+   (alter stock
+          (fn [old-stock]
+            (update-in old-stock [product-id store-id]
+                       (fn [available] (- available n))))))) 
+                       ; buying a single product should also be coordinated. No updates if anything changed when it was happening.
 
 (defn- find-available-stores [product-ids-and-number]
   "Returns the id's of the stores in which the given products are still
@@ -109,8 +112,8 @@
 
 
 (defn buy-products [store-id product-ids-and-number]
-  (dosync(doseq [[product-id n] product-ids-and-number]
-    (buy-product store-id product-id n))))
+  (doseq [[product-id n] product-ids-and-number]
+            (buy-product store-id product-id n))) ;; buy product works as a transaction so we don't need to use a dosync here maybe?
 
 (defn- process-customer [customer]
   "Process `customer`. Consists of three steps:
@@ -120,24 +123,26 @@
 
   Note: because this implementation is sequential, we do not suffer from
   inconsistencies. That will be different in your implementation."
+  (println "Processing customer: " customer)
   (let [product-ids-and-number
-        (map (fn [[name number]] [(product-name->id name) number])
-             (:products customer))
-        available-store-ids  ; step 1
-        (find-available-stores product-ids-and-number)
-        cheapest-store-id  ; step 2
-        (first  ; Returns nil if there's no available stores
-         (sort-by
+                (map (fn [[name number]] [(product-name->id name) number])
+                     (:products customer))
+                available-store-ids  ; step 1
+                (dosync (find-available-stores product-ids-and-number)) 
+                ; To find the available stores, we do it as a transaction.
+                cheapest-store-id  ; step 2
+                (first  ; Returns nil if there's no available stores
+                 (sort-by
               ; sort stores by total price
-          (fn [store-id] (get-total-price store-id product-ids-and-number))
-          available-store-ids))]
-    (if (nil? cheapest-store-id)
-      (log "Customer" (:id customer) "could not find a store that has"
-           (:products customer))
-      (dosync
-        (buy-products cheapest-store-id product-ids-and-number) ;  step 3
-        (log "Customer" (:id customer) "bought" (:products customer) "in"
-             (store-id->name cheapest-store-id))))))
+                  (fn [store-id] (get-total-price store-id product-ids-and-number))
+                  available-store-ids))]
+            (if (nil? cheapest-store-id)
+              (log "Customer" (:id customer) "could not find a store that has"
+                   (:products customer))
+              (dosync
+               (buy-products cheapest-store-id product-ids-and-number) ;  step 3
+               (log "Customer" (:id customer) "bought" (:products customer) "in"
+                    (store-id->name cheapest-store-id))))))
 
 (def finished-processing?
   "Set to true once all customers have been processed, so that sales process
@@ -145,24 +150,29 @@
   (atom false))
 
 (defn process-customers [customers]
-  "Process `customers` one by one. In this code, this happens sequentially. In
-  your implementation, this should be parallelized."
-  (doseq [customer customers]
-    (process-customer customer))
-  (reset! finished-processing? true))
+  (let [futures (doall (map 
+                        (fn [customer]
+                              (.submit pool 
+                                       (fn [] (process-customer customer))
+                                       )
+                          ) customers)
+                       )] 
+    (doseq [future futures]
+      (.get future))
+    (reset! finished-processing? true)))
 
 
 (defn start-sale [store-id]
   "Sale: -10% on `store-id`."
   (log "Start sale for store" (store-id->name store-id))
-  (doseq [product-id (range (count products))]
-    (set-price store-id product-id (* (get-price store-id product-id) 0.90))))
+  (dosync (doseq [product-id (range (count products))]
+    (set-price store-id product-id (* (get-price store-id product-id) 0.90)))))
 
 (defn end-sale [store-id]
   "End sale: reverse discount on `store-id`."
   (log "End sale for store" (store-id->name store-id))
-  (doseq [product-id (range (count products))]
-    (set-price store-id product-id (/ (get-price store-id product-id) 0.90))))
+  (dosync(doseq [product-id (range (count products))]
+    (set-price store-id product-id (/ (get-price store-id product-id) 0.90)))))
 
 (defn sales-process []
   "The sales process starts and ends sales periods, until `finished-processing?`
@@ -195,10 +205,11 @@
   ;;   @f1
   ;;   @f2
   ;;   (await logger))
-  
-  (def f1 (.submit  pool (fn [] (time ( process-customers input/customers ) ) ) ))
-  (def f2 (.submit pool (fn [] (sales-process)) ) )
-  (.get f1)
+
+  ;; (def f1 (.submit  pool (fn [] (time (process-customers input/customers)))))
+  (time (process-customers input/customers))
+  (def f2 (.submit pool (fn [] (sales-process))))
+  ;; (.get f1)
   (.get f2)
   (.shutdown pool)
   ; Print final stock, for manual verification and debugging

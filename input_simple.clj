@@ -44,6 +44,7 @@
    {:id 7 :products [["Banana" 3] ["Apple" 5] ["Pear" 7]]}
    {:id 8 :products [["Pear" 1] ["Banana" 4]]}
    {:id 9 :products [["Apple" 6] ["Pear" 4] ["Avocado" 3]]}
+   {:id 10 :products [["Apple" 3] ["Avocado" 12] ["Pear" 4] ["Avocado" 3]]}
   ])
 
 ; Time in milliseconds between sales periods
