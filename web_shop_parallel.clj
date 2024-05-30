@@ -1,19 +1,20 @@
 (ns web-shop-parallel
   (:require [clojure.pprint] ; For 'pretty-printing'
             ; Choose one of the input files below.
-            [input-simple :as input]
+            ;[input-simple :as input]
             ;[input-random :as input]
+            ;[input-simple-thirsty :as input]
+            ;[input-no-customer-processed :as input]
+            [input-2-users-1-product :as input]
             ))
             
 (import '(java.util.concurrent Executors))
 (def pool (Executors/newFixedThreadPool 8))
 
-
-
 ; Logging
 (def logger (agent nil))
-;(defn log [& msgs] (send logger (fn [_] (apply println msgs)))) ; uncomment this to turn ON logging
-(defn log [& msgs] nil) ; uncomment this to turn OFF logging
+(defn log [& msgs] (send logger (fn [_] (apply println msgs)))) ; uncomment this to turn ON logging
+;(defn log [& msgs] nil) ; uncomment this to turn OFF logging
 
 
 ; We simply copy the products from the input file, without modifying them.
@@ -88,13 +89,11 @@
 
 (defn print-stock-sum [stock]
   "Prints the sum of the stock of each product across all stores"
-  (println "Stock sums per product: ")
+  (println "Total amount of stock available ")
   (doseq [product-id (range (count stock))]
     (let [sum-of-stock (reduce + (nth stock product-id))]
-      (print (clojure.pprint/cl-format nil "~4d " sum-of-stock))
-      )
-    (println (product-id->name product-id))
-    )
+      (print (clojure.pprint/cl-format nil "~4d " sum-of-stock)))
+    (println (product-id->name product-id)))
   )
 
 (defn- product-available? [store-id product-id n]
@@ -107,12 +106,13 @@
   "Updates `stock` to buy `n` of the given product in the given store but with stock as a ref."
   (dosync
   ;;  (if (product-available? store-id product-id n)
-   (alter stock
-          (fn [old-stock]
-            (update-in old-stock [product-id store-id]
-                       (fn [available] (- available n)))))
-  ;;  (println "Store:" (store-id->name store-id ) "doesnt have enough "(product-id->name product-id ) "Needs " n)
-));)
+     (alter stock
+            (fn [old-stock]
+              (update-in old-stock [product-id store-id]
+                         (fn [available] (- available n)))) ;)
+  ;;  (println "Store:" (store-id->name store-id ) "doesnt have enough "(product-id->name product-id ) "Needs " n "has" (nth (nth @stock product-id) store-id))
+   )
+))
 
 
 (defn- find-available-stores [product-ids-and-number]
@@ -126,9 +126,9 @@
    (map store-name->id stores)))
 
 
-(defn buy-products [store-id product-ids-and-number]
+(defn buy-products [store-id product-ids-and-number]  
   (doseq [[product-id n] product-ids-and-number]
-    (buy-product store-id product-id n))) ;; buy product works as a transaction so we don't need to use a dosync here maybe?
+      (buy-product store-id product-id n))) ;; buy product works as a transaction so we don't need to use a dosync here maybe?
 
 (defn- process-customer [customer]
   "Process `customer`. Consists of three steps:
@@ -169,7 +169,7 @@
   can end."
   (atom false))
 
-(defn process-customers [customers]
+(defn process-customers [customers pool]
   (let [futures (doall (map
                         (fn [customer]
                           (.submit pool
@@ -182,14 +182,12 @@
 (defn start-sale [store-id]
   "Sale: -10% on `store-id`."
   (log "Start sale for store" (store-id->name store-id))
-  (println "Start sale for "(store-id->name store-id))
   (dosync (doseq [product-id (range (count products))]
             (set-price store-id product-id (* (get-price store-id product-id) 0.90)))))
 
 (defn end-sale [store-id]
   "End sale: reverse discount on `store-id`."
   (log "End sale for store" (store-id->name store-id))
-  (println "End sale for " (store-id->name store-id))
   (dosync 
    (doseq [product-id (range (count products))]
             (set-price store-id product-id (/ (get-price store-id product-id) 0.90)))))
@@ -207,13 +205,16 @@
       (recur))))
 
 
-(defn main []
+(defn main [threads]
   ; Print parameters
-  (println "Number of products:" (count products))
+
+  (def pool (Executors/newFixedThreadPool threads))
+
   (println "Number of stores:" (count stores))
   (println "Number of customers:" (count input/customers))
   (println "Time between sales:" input/TIME_BETWEEN_SALES)
   (println "Time of sales:" input/TIME_OF_SALES)
+  (println "Threads: " threads)
   ; Print initial stock
   (println "Initial stock:")
   (print-stock @stock)
@@ -222,20 +223,15 @@
 
   ; Start two threads: one for processing customers, one for sales.
   ; Print the time to execute the first thread.
-  ;; (let [f1 (future (time (process-customers input/customers)))
-  ;;       f2 (future (sales-process))]
-  ;;   ; Wait until both have finished
-  ;;   @f1
-  ;;   @f2
-  ;;   (await logger))
+  (let [f1 (future (time (process-customers input/customers pool)))
+        f2 (future (sales-process))]
+    ; Wait until both have finished
+    @f1
+    @f2
+    (await logger))
 
-  ;; (def f1 (.submit  pool (fn [] (time (process-customers input/customers)))))
-  
-  (let [sales-future (.submit pool ^Callable (fn [] sales-process))]
-    (time (process-customers input/customers))
-    @sales-future
-    )
-  
+
+
   (.shutdown pool)
   ; Print final stock, for manual verification and debugging
   (println "Final stock:")
@@ -243,6 +239,10 @@
   (println "Final stock sums:")
   (print-stock-sum @stock))
   
-
-(main)
+;; (def threads input/thread_count)
+;; (doseq [thread threads]
+;;   (def pool (Executors/newFixedThreadPool thread))
+;;   (main pool)
+;;   )
+(main 2)
 (shutdown-agents)

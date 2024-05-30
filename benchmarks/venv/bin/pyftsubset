@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/home/w3ndo/Desktop/Course Work/Multicore Programming/Clojure Project/benchmarks/venv/bin/python3" "$0" "$@"
+'''exec' "/home/w3ndo/Desktop/Course Work/Multicore Programming/Clojure Project/benchmarks/venv/bin/python" "$0" "$@"
 ' '''
 # -*- coding: utf-8 -*-
 import re

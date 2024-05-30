@@ -30,13 +30,6 @@
    [  25   17   31   18   20] ; Pear
   ])
 
-;; (def stock 
-;;   [[5   5   3   2   5] ; Apple
-;;    [5   7   6   1   2] ; Avocado
-;;    [2   3   2   1   8] ; Banana
-;;    [5   7   3   1   0] ; Pear
-;;    ])
-
 ; Customers and the products they want to buy.
 ;
 ; E.g. customer 0 wants to buy 5 bananas and 7 apples.
@@ -57,3 +50,5 @@
 (def TIME_BETWEEN_SALES 50)
 ; Time in milliseconds of sales period
 (def TIME_OF_SALES 10)
+
+(def thread_count [2 4 6 8])

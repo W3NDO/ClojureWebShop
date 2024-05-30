@@ -31,7 +31,7 @@ EXPERIMENT_NAME = "inputs"
 # Name of the benchmark. File names should be be result-$NAME-$ITERATION.txt.
 BENCHMARK_NAME = r"result-(?P<name>.+)-(?P<iteration>\d+).txt"
 # Expected benchmark names
-NAMES = ["simple", "random"]
+NAMES = ["simple", "random", "simple-thirsty", "random-thirsty"]
 # Number of iterations expected per benchmark
 NUMBER_OF_ITERATIONS = 30
 
@@ -77,6 +77,7 @@ def parse_files(names: list[str]) -> dict[str, list[float]]:
         parameters[name].append(pars)
     # Check if parameters match across all files of the same benchmark.
     for name, pars in parameters.items():
+        print(f"Params: {name}\n")
         for p in pars:
             if p != pars[0]:
                 raise Exception(
