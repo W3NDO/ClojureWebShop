@@ -50,5 +50,3 @@
 (def TIME_BETWEEN_SALES 50)
 ; Time in milliseconds of sales period
 (def TIME_OF_SALES 10)
-
-(def thread_count [2 4 6 8])

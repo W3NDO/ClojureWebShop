@@ -9,13 +9,8 @@ for i in {1..30}
 do
     echo "---"
     echo "> iteration $i"
-    ./clj web_shop_parallel.clj > "benchmarks/result-random-$i.txt"
+    ./clj web_shop_parallel.clj > "benchmarks/result-random_500_products_4_threads-$i.txt"
+    # ./clj web_shop.clj > "benchmarks/result-random_50_products-$i.txt"
 done
+# In the benchmarking I changed the file name to match with the bechmark being run
 
-# echo "---  Random Input ---"
-# for i in {1..30}
-# do
-#     echo "---"
-#     echo "> iteration $i"
-#     ./clj web_shop_parallel.clj > "benchmarks/results-random-$i.txt"
-# done

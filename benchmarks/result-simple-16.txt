@@ -1,3 +1,4 @@
+Number of products: 4
 Number of stores: 5
 Number of customers: 10
 Time between sales: 50
@@ -9,24 +10,11 @@ Aldi Carr Colr Delh Lidl
    5    7    6   10    2 Avocado
    2   10   20   17    8 Banana
   25   17   31   18   20 Pear
-Initial stock sums:
-Total amount of stock available 
- 114 Apple
-  30 Avocado
-  57 Banana
- 111 Pear
-"Elapsed time: 40.195021 msecs"
-"Elapsed time: 71.132935 msecs"
+"Elapsed time: 19.446747 msecs"
 Final stock:
 Stock:
 Aldi Carr Colr Delh Lidl 
-  15   14    6   16   15 Apple
-   5    4    2    6    2 Avocado
-   2    3    2   12    8 Banana
-  25    6   28   18    5 Pear
-Final stock sums:
-Total amount of stock available 
-  66 Apple
-  19 Avocado
-  27 Banana
-  82 Pear
+  15   25    3    8   15 Apple
+   5    7    3    2    2 Avocado
+   2    6    1   10    8 Banana
+  25   17   19   16    5 Pear

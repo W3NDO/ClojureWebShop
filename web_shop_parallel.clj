@@ -2,19 +2,17 @@
   (:require [clojure.pprint] ; For 'pretty-printing'
             ; Choose one of the input files below.
             ;[input-simple :as input]
-            ;[input-random :as input]
-            ;[input-simple-thirsty :as input]
+            [input-random :as input]
             ;[input-no-customer-processed :as input]
-            [input-2-users-1-product :as input]
+            ;[input-2-users-1-product :as input]
             ))
             
 (import '(java.util.concurrent Executors))
-(def pool (Executors/newFixedThreadPool 8))
 
 ; Logging
 (def logger (agent nil))
-(defn log [& msgs] (send logger (fn [_] (apply println msgs)))) ; uncomment this to turn ON logging
-;(defn log [& msgs] nil) ; uncomment this to turn OFF logging
+;; (defn log [& msgs] (send logger (fn [_] (apply println msgs)))) ; uncomment this to turn ON logging
+(defn log [& msgs] nil) ; uncomment this to turn OFF logging
 
 
 ; We simply copy the products from the input file, without modifying them.
@@ -158,6 +156,7 @@
             (:products customer))
        (dosync
         (ensure stock)
+        (ensure prices)
         (buy-products cheapest-store-id product-ids-and-number) ;  step 3
         ;; (println "Customer" (:id customer) "bought" (:products customer) "in"
         ;;         (store-id->name cheapest-store-id))
@@ -204,12 +203,10 @@
     (if (not @finished-processing?)
       (recur))))
 
-
 (defn main [threads]
-  ; Print parameters
-
   (def pool (Executors/newFixedThreadPool threads))
 
+  ; Print parameters
   (println "Number of stores:" (count stores))
   (println "Number of customers:" (count input/customers))
   (println "Time between sales:" input/TIME_BETWEEN_SALES)
@@ -223,6 +220,10 @@
 
   ; Start two threads: one for processing customers, one for sales.
   ; Print the time to execute the first thread.
+  ; TODO map the sales-process and process customers to the threadpools?
+  ;; (def processes [(time (process-customers input/customers)) (sales-process)])
+
+
   (let [f1 (future (time (process-customers input/customers pool)))
         f2 (future (sales-process))]
     ; Wait until both have finished
@@ -236,13 +237,9 @@
   ; Print final stock, for manual verification and debugging
   (println "Final stock:")
   (print-stock @stock)
-  (println "Final stock sums:")
-  (print-stock-sum @stock))
+  ;; (println "Final stock sums:")
+  ;; (print-stock-sum @stock) ;; This is a simple verification that the sum of stock across all stores is somewhat consistent
+)
   
-;; (def threads input/thread_count)
-;; (doseq [thread threads]
-;;   (def pool (Executors/newFixedThreadPool thread))
-;;   (main pool)
-;;   )
-(main 2)
+(main 4)
 (shutdown-agents)

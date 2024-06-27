@@ -1,8 +1,10 @@
 (ns web-shop
   (:require [clojure.pprint] ; For 'pretty-printing'
             ; Choose one of the input files below.
-            [input-simple :as input]
-            ;[input-random :as input]
+            ;[input-simple :as input]
+            [input-random :as input]
+            ;[input-no-customer-processed :as input]
+            ;[input-2-users-1-product :as input]
             ))
 
 

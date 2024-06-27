@@ -1,0 +1,1 @@
+["^ ","~$pool",["^ ","~:row",4,"~:col",1,"~:name","^0","~:ns","~$test","~:top-ns","^5"],"~$today",["^ ","^1",6,"^2",1,"^3","^7","^4","^5","^6","^5"],"~$print-today",["^ ","^1",9,"^2",1,"~:fixed-arities",["~#set",[0]],"^3","^8","^4","^5","^6","^5","~:type","~:fn"],"~:filename","/home/w3ndo/Desktop/Course Work/Multicore Programming/Clojure Project/test.clj"]
